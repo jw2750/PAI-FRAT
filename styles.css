@@ -1,0 +1,464 @@
+/* General Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+/* Header Section */
+.header-section {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.form-group {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.form-group:last-child {
+    margin-right: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+}
+
+.radio-group label {
+    margin-right: 15px;
+    display: inline;
+}
+
+/* Risk Table */
+.risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+/* Adjust Risk Scores Button */
+.adjust-risk-btn {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.adjust-risk-btn i {
+    margin-right: 5px;
+}
+
+.adjust-risk-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.table-header, .section-header, .risk-row {
+    display: flex;
+    border: 1px solid #000;
+}
+
+.table-header, .section-header {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.col-category {
+    display: none; /* Hide the category column */
+}
+
+.col-risk-factor {
+    width: 45%;
+    padding: 8px;
+    border-right: 1px solid #000;
+}
+
+.col-checkbox, .col-score {
+    display: none; /* Hide the separate columns */
+}
+
+.col-checkbox-score {
+    width: 30%;
+    padding: 8px;
+    text-align: center;
+    border-right: 1px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Styles for clickable cells */
+.col-checkbox-score[data-score] {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.col-checkbox-score[data-score]:hover {
+    background-color: #f0f0f0;
+}
+
+.col-checkbox-score.selected {
+    font-weight: bold;
+}
+
+.score-display {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+.col-notes {
+    width: 25%;
+    padding: 8px;
+}
+
+.notes-input {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.risk-row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.risk-highlight {
+    background-color: #ffcba4;
+}
+
+.section {
+    margin-bottom: 1px;
+}
+
+/* Risk Matrix */
+.risk-matrix {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.risk-matrix h2 {
+    margin-bottom: 10px;
+}
+
+.risk-matrix table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.risk-matrix th, .risk-matrix td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: center;
+}
+
+.risk-matrix th {
+    background-color: #f0f0f0;
+}
+
+.low-risk {
+    background-color: #90ee90;
+}
+
+.moderate-risk {
+    background-color: #ffff99;
+}
+
+.high-risk {
+    background-color: #ffcba4;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-buttons button {
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.action-buttons button:hover {
+    background-color: #e0e0e0;
+}
+
+.total-risk {
+    font-weight: bold;
+}
+
+/* Mobile-friendly improvements */
+.mobile-section-toggle {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .container {
+        max-width: 100%;
+        padding: 15px;
+    }
+    
+    .risk-matrix table {
+        font-size: 0.9rem;
+    }
+    
+    /* Improve touch targets */
+    .form-group input[type="text"],
+    .form-group input[type="date"] {
+        height: 38px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-group {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    /* Improve table layout for tablets */
+    .col-risk-factor {
+        width: 50%;
+    }
+    
+    .col-checkbox-score {
+        width: 25%;
+    }
+    
+    .col-notes {
+        width: 25%;
+    }
+    
+    /* Make buttons more touch-friendly */
+    .action-buttons button {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+    
+    /* Adjust risk matrix for better readability */
+    .risk-matrix {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Small mobile devices */
+    body {
+        padding: 5px;
+    }
+    
+    .container {
+        padding: 8px;
+        box-shadow: none;
+    }
+    
+    h1 {
+        font-size: 1.3rem;
+    }
+    
+    /* Show mobile section toggle icons */
+    .mobile-section-toggle {
+        display: block !important;
+    }
+    
+    /* Style section headers for mobile */
+    .section-header {
+        position: relative;
+        padding: 12px 8px;
+        background-color: #f8f8f8;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Add visual feedback for tappable elements */
+    .section-header:active {
+        background-color: #e8e8e8;
+    }
+    
+    /* Restructure table for mobile */
+    .table-header, .section-header, .risk-row {
+        flex-direction: column;
+    }
+    
+    .col-risk-factor, .col-checkbox-score, .col-notes {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #000;
+        padding: 10px 8px;
+    }
+    
+    .col-notes {
+        border-bottom: none;
+    }
+    
+    /* Make risk cells easier to tap */
+    .col-checkbox-score[data-score] {
+        min-height: 44px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 8px;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+        margin: 4px 0;
+    }
+    
+    .col-checkbox-score[data-score]::before {
+        content: "Select if true:";
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .col-checkbox-score[data-score]:active {
+        background-color: #e0e0e0;
+    }
+    
+    /* Improve visual feedback for selected items */
+    .col-checkbox-score.selected {
+        border-left: 4px solid #1890ff;
+    }
+    
+    /* Maintain color coding for risk levels in mobile view */
+    .col-checkbox-score.selected.low-risk {
+        background-color: #90ee90; /* Green for low risk */
+        border-left: 4px solid #008000;
+    }
+    
+    .col-checkbox-score.selected.high-risk {
+        background-color: #ffcba4; /* Red for high risk */
+        border-left: 4px solid #ff0000;
+    }
+    
+    /* Fix table header on mobile */
+    .table-header {
+        display: none; /* Hide the table header on mobile as it's not needed */
+    }
+    
+    /* Improve risk matrix display on small screens */
+    .risk-matrix {
+        margin-top: 20px;
+    }
+    
+    .risk-matrix h2 {
+        font-size: 1.2rem;
+    }
+    
+    .risk-matrix table {
+        font-size: 0.8rem;
+    }
+    
+    .risk-matrix th, .risk-matrix td {
+        padding: 6px 4px;
+    }
+    
+    /* Make action buttons full width and more tappable */
+    .action-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .action-buttons button {
+        width: 100%;
+        padding: 15px;
+        font-size: 1rem;
+    }
+    
+    /* Improve form elements for touch */
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .notes-input {
+        padding: 12px 8px;
+        font-size: 1rem;
+    }
+    
+    .radio-group label {
+        padding: 8px 0;
+    }
+    
+    .radio-group input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    /* Extra small devices */
+    h1 {
+        font-size: 1.1rem;
+    }
+    
+    .risk-matrix table {
+        font-size: 0.7rem;
+    }
+}

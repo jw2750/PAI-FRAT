@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Flight Risk Assessment Historic Log</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="db.js"></script>
+    <style>
+        .log-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .log-table th, .log-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .log-table th {
+            background-color: #f0f0f0;
+            position: sticky;
+            top: 0;
+        }
+        
+        .log-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .log-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .back-button, .export-button {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .back-button:hover, .export-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .button-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .risk-score {
+            font-weight: bold;
+        }
+        
+        .low-risk-score {
+            color: green;
+        }
+        
+        .moderate-risk-score {
+            color: orange;
+        }
+        
+        .high-risk-score {
+            color: red;
+        }
+        
+        .details-button, .delete-button {
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        
+        .details-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .delete-button {
+            background-color: #ffeeee;
+            border: 1px solid #ffcccc;
+        }
+        
+        .delete-button:hover {
+            background-color: #ffdddd;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+        
+        .risk-factors-list {
+            margin-top: 20px;
+        }
+        
+        .risk-factor-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .risk-factor-score {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .risk-factor-notes {
+            margin-top: 5px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .log-table {
+                font-size: 0.9rem;
+            }
+            
+            .log-table th, .log-table td {
+                padding: 6px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .log-table {
+                font-size: 0.8rem;
+            }
+            
+            .log-table th, .log-table td {
+                padding: 4px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="log-container">
+        <h1>Flight Risk Assessment Historic Log</h1>
+        
+        <div class="button-container">
+            <button id="backBtn" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Assessment
+            </button>
+            <button id="exportBtn" class="export-button">
+                <i class="fas fa-file-export"></i> Export to CSV
+            </button>
+        </div>
+        
+        <div id="logTableContainer">
+            <!-- Table will be populated by JavaScript -->
+        </div>
+        
+        <!-- Modal for displaying risk factor details -->
+        <div id="detailsModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Flight Risk Assessment Details</h2>
+                <div id="modalContent">
+                    <!-- Modal content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const logTableContainer = document.getElementById('logTableContainer');
+            const backBtn = document.getElementById('backBtn');
+            const detailsModal = document.getElementById('detailsModal');
+            const closeBtn = document.querySelector('.close');
+            
+            // Show loading indicator
+            logTableContainer.innerHTML = '<div class="loading">Loading historic log data...</div>';
+            
+            // Attempt to migrate data from localStorage to IndexedDB (if needed)
+            try {
+                const migrationResult = await migrateFromLocalStorage();
+                console.log(migrationResult);
+            } catch (error) {
+                console.error('Migration error:', error);
+            }
+            
+            // Load historic log data from IndexedDB
+            async function loadHistoricLog() {
+                try {
+                    const historicLog = await getHistoricLogEntries();
+                    
+                    if (historicLog.length === 0) {
+                        logTableContainer.innerHTML = '<div class="no-data">No historic log entries found.</div>';
+                        return;
+                    }
+                    
+                    // Sort entries by date (newest first)
+                    historicLog.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    // Create table
+                    const table = document.createElement('table');
+                    table.className = 'log-table';
+                    
+                    // Create table header
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    
+                    const headers = ['Date', 'Flight ID', 'Departure', 'Arrival', 'Flight Plan', 'Pilot Experience', 'Risk Score', 'Actions'];
+                    
+                    headers.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        headerRow.appendChild(th);
+                    });
+                    
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+                    
+                    // Create table body
+                    const tbody = document.createElement('tbody');
+                    
+                    historicLog.forEach((entry, index) => {
+                        const row = document.createElement('tr');
+                        
+                        // Format date
+                        const dateCell = document.createElement('td');
+                        dateCell.textContent = entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A';
+                        row.appendChild(dateCell);
+                        
+                        // Flight ID
+                        const flightIdCell = document.createElement('td');
+                        flightIdCell.textContent = entry.flightId || 'N/A';
+                        row.appendChild(flightIdCell);
+                        
+                        // Departure Airport
+                        const departureCell = document.createElement('td');
+                        departureCell.textContent = entry.departureAirport || 'N/A';
+                        row.appendChild(departureCell);
+                        
+                        // Arrival Airport
+                        const arrivalCell = document.createElement('td');
+                        arrivalCell.textContent = entry.arrivalAirport || 'N/A';
+                        row.appendChild(arrivalCell);
+                        
+                        // Flight Plan Type
+                        const flightPlanCell = document.createElement('td');
+                        flightPlanCell.textContent = entry.flightplanType || 'N/A';
+                        row.appendChild(flightPlanCell);
+                        
+                        // Pilot Experience
+                        const experienceCell = document.createElement('td');
+                        experienceCell.textContent = entry.pilotExperience ? `${entry.pilotExperience} hours` : 'N/A';
+                        row.appendChild(experienceCell);
+                        
+                        // Risk Score with color coding
+                        const scoreCell = document.createElement('td');
+                        const scoreSpan = document.createElement('span');
+                        scoreSpan.className = 'risk-score';
+                        scoreSpan.textContent = entry.totalScore || '0';
+                        
+                        // Add color class based on risk level
+                        const score = parseInt(entry.totalScore) || 0;
+                        const isIFR = entry.flightplanType === 'IFR';
+                        const isOver100Hours = parseInt(entry.pilotExperience) > 100;
+                        
+                        if (isIFR) {
+                            if (isOver100Hours) {
+                                if (score >= 35) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 30) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 25) scoreSpan.classList.add('low-risk-score');
+                            } else {
+                                if (score > 30) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 25) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 20) scoreSpan.classList.add('low-risk-score');
+                            }
+                        } else { // VFR
+                            if (isOver100Hours) {
+                                if (score > 25) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 20) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 15) scoreSpan.classList.add('low-risk-score');
+                            } else {
+                                if (score > 20) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 15) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 5) scoreSpan.classList.add('low-risk-score');
+                            }
+                        }
+                        
+                        scoreCell.appendChild(scoreSpan);
+                        row.appendChild(scoreCell);
+                        
+                        // Actions
+                        const actionsCell = document.createElement('td');
+                        const detailsBtn = document.createElement('button');
+                        detailsBtn.className = 'details-button';
+                        detailsBtn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
+                        detailsBtn.dataset.index = index;
+                        detailsBtn.addEventListener('click', function() {
+                            showDetails(historicLog[this.dataset.index]);
+                        });
+                        
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-button';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                        deleteBtn.dataset.entryId = entry.id;
+                        deleteBtn.addEventListener('click', function() {
+                            deleteEntry(this.dataset.entryId);
+                        });
+                        
+                        actionsCell.appendChild(detailsBtn);
+                        actionsCell.appendChild(deleteBtn);
+                        row.appendChild(actionsCell);
+                        
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(tbody);
+                    logTableContainer.innerHTML = '';
+                    logTableContainer.appendChild(table);
+                } catch (error) {
+                    console.error('Error loading historic log:', error);
+                    logTableContainer.innerHTML = '<div class="no-data">Error loading historic log data. Please try again.</div>';
+                }
+            }
+            
+            // Show details modal for a specific entry
+            function showDetails(entry) {
+                const modalContent = document.getElementById('modalContent');
+                
+                // Create content for the modal
+                let content = `
+                    <div class="entry-details">
+                        <p><strong>Date:</strong> ${entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A'}</p>
+                        <p><strong>Flight ID:</strong> ${entry.flightId || 'N/A'}</p>
+                        <p><strong>Route:</strong> ${entry.departureAirport || 'N/A'} to ${entry.arrivalAirport || 'N/A'}</p>
+                        <p><strong>Flight Plan Type:</strong> ${entry.flightplanType || 'N/A'}</p>
+                        <p><strong>Pilot Experience:</strong> ${entry.pilotExperience ? `${entry.pilotExperience} hours` : 'N/A'}</p>
+                        <p><strong>Total Risk Score:</strong> ${entry.totalScore || '0'}</p>
+                        ${entry.pilotExperienceNotes ? `<p><strong>Pilot Experience Notes:</strong> ${entry.pilotExperienceNotes}</p>` : ''}
+                    </div>
+                `;
+                
+                // Add risk factors if available
+                if (entry.riskFactors && entry.riskFactors.length > 0) {
+                    content += '<h3>Selected Risk Factors:</h3>';
+                    content += '<div class="risk-factors-list">';
+                    
+                    // Group risk factors by category
+                    const categories = {};
+                    entry.riskFactors.forEach(factor => {
+                        if (!categories[factor.category]) {
+                            categories[factor.category] = [];
+                        }
+                        categories[factor.category].push(factor);
+                    });
+                    
+                    // Display risk factors by category
+                    for (const category in categories) {
+                        content += `<h4>${capitalizeFirstLetter(category)}</h4>`;
+                        
+                        categories[category].forEach(factor => {
+                            const score = parseInt(factor.score);
+                            const scoreClass = score < 0 ? 'low-risk-score' : (score > 0 ? 'high-risk-score' : '');
+                            
+                            content += `
+                                <div class="risk-factor-item">
+                                    <div>
+                                        ${factor.riskFactor}
+                                        <span class="risk-factor-score ${scoreClass}">${score > 0 ? '+' + score : score}</span>
+                                    </div>
+                                    ${factor.notes ? `<div class="risk-factor-notes">Notes: ${factor.notes}</div>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    content += '</div>';
+                } else {
+                    content += '<p>No risk factors selected for this entry.</p>';
+                }
+                
+                modalContent.innerHTML = content;
+                detailsModal.style.display = 'block';
+            }
+            
+            // Helper function to capitalize first letter
+            function capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+            
+            // Function to delete an entry from the historic log
+            async function deleteEntry(id) {
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    try {
+                        const result = await deleteHistoricLogEntry(parseInt(id));
+                        if (result) {
+                            await loadHistoricLog(); // Reload the table
+                        } else {
+                            alert('Unable to delete entry. It may have been already deleted or you do not have permission.');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting entry:', error);
+                        alert('An error occurred while deleting the entry.');
+                    }
+                }
+            }
+            
+            // Function to export the historic log to CSV
+            async function exportToCSV() {
+                try {
+                    const csvContent = await exportHistoricLogToCSV();
+                    
+                    // Create a blob and download link
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'flight_risk_log.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (error) {
+                    if (error === 'No data to export.') {
+                        alert('No data to export.');
+                    } else {
+                        console.error('Error exporting to CSV:', error);
+                        alert('An error occurred while exporting the data.');
+                    }
+                }
+            }
+            
+            // Event listeners
+            backBtn.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.addEventListener('click', exportToCSV);
+            
+            closeBtn.addEventListener('click', function() {
+                detailsModal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', function(event) {
+                if (event.target === detailsModal) {
+                    detailsModal.style.display = 'none';
+                }
+            });
+            
+            // Load the historic log data when the page loads
+            await loadHistoricLog();
+        });
+    </script>
+</body>
+</html>

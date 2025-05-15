@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Adjust Risk Score Values</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Additional styles specific to the risk score adjustment page */
+        .risk-score-editor {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .risk-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .risk-score-table th, 
+        .risk-score-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .risk-score-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .risk-score-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .risk-score-input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        
+        .category-header {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .negative-score {
+            color: green;
+        }
+        
+        .positive-score {
+            color: red;
+        }
+        
+        @media (max-width: 768px) {
+            .risk-score-table th, 
+            .risk-score-table td {
+                padding: 8px 5px;
+                font-size: 0.9rem;
+            }
+            
+            .risk-score-input {
+                width: 50px;
+                padding: 4px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .risk-score-table {
+                font-size: 0.85rem;
+            }
+            
+            .risk-score-table th, 
+            .risk-score-table td {
+                padding: 6px 4px;
+            }
+            
+            .risk-score-input {
+                width: 45px;
+                padding: 3px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adjust Risk Score Values</h1>
+        
+        <div class="risk-score-editor">
+            <p>Adjust the point values for each risk factor. Negative values reduce risk, positive values increase risk.</p>
+            
+            <table class="risk-score-table" id="riskScoreTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Risk Factor</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="action-buttons">
+                <button id="backBtn"><i class="fas fa-arrow-left"></i> Back to Assessment</button>
+                <button id="resetDefaultsBtn"><i class="fas fa-undo"></i> Reset to Defaults</button>
+                <button id="saveBtn"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="risk-scores.js"></script>
+</body>
+</html>
