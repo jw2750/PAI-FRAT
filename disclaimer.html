@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disclaimer - Flight Risk Assessment Tool</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             display: flex;
@@ -12,8 +13,6 @@
             min-height: 100vh;
             background-color: #f5f5f5;
             padding: 20px;
-            font-family: Arial, sans-serif;
-            margin: 0;
         }
         
         .disclaimer-container {
@@ -40,17 +39,16 @@
         
         .accept-btn {
             display: block;
-            width: 250px;
-            margin: 30px auto 0;
-            padding: 15px 25px;
+            width: 200px;
+            margin: 20px auto 0;
+            padding: 12px 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             text-align: center;
-            text-decoration: none;
         }
         
         .accept-btn:hover {
@@ -107,9 +105,16 @@
         
         <p class="note">NOTE: Any data you enter in this FRAT is saved locally in your browser. No data is uploaded.</p>
         
-        <form action="index-original.html" method="get">
-            <button type="submit" id="acceptBtn" class="accept-btn" onclick="localStorage.setItem('disclaimerAccepted', 'true');">I Understand and Accept</button>
-        </form>
+        <a href="index.html" id="acceptLink" class="accept-btn" style="font-size: 18px; padding: 15px 25px; margin-top: 30px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; width: 250px; text-decoration: none; text-align: center; display: block;">I Understand and Accept</a>
     </div>
+    
+    <script>
+        // Set localStorage when the link is clicked
+        document.getElementById('acceptLink').onclick = function() {
+            localStorage.setItem('disclaimerAccepted', 'true');
+            console.log('Disclaimer accepted');
+            // The link will automatically redirect to index.html
+        };
+    </script>
 </body>
 </html>

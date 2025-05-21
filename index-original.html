@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Flight Risk Assessment Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="db.js"></script>
+</head>
+<body>
+    <!-- Check if disclaimer has been accepted -->
+    <script>
+        // If disclaimer has not been accepted, redirect to disclaimer page
+        if (localStorage.getItem('disclaimerAccepted') !== 'true') {
+            window.location.href = 'index.html';
+        }
+    </script>
+    <div class="container">
+	<a href=https://www.paiconsulting.com/ target="_blank" rel="noopener noreferrer"><img src="PAI Logo for FRAT square 03.png"  width="100" height="100"alt="Description" class="responsive-img"> </a>
+        <h1>Flight Risk Assessment Tool</h1>
+        
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date">
+                </div>
+                <div class="form-group">
+                    <label for="flightId">Flight ID:</label>
+                    <input type="text" id="flightId" name="flightId">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="departureAirport">Departure Airport (ICAO):</label>
+                    <input type="text" id="departureAirport" name="departureAirport">
+                </div>
+                <div class="form-group">
+                    <label for="arrivalAirport">Arrival Airport (ICAO):</label>
+                    <input type="text" id="arrivalAirport" name="arrivalAirport">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type of Flightplan:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="ifr" name="flightplanType" value="IFR" checked>
+                        <label for="ifr">IFR</label>
+                        <input type="radio" id="vfr" name="flightplanType" value="VFR">
+                        <label for="vfr">VFR</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Assessment Table -->
+        <div class="risk-table">
+            <div class="table-header">
+                <div class="col-risk-factor">
+                    Risk Factor
+                    <button id="adjustRiskScoresBtn" class="adjust-risk-btn" title="Adjust Risk Score Values">
+                        <i class="fas fa-sliders-h"></i> Adjust Risk Score Values
+                    </button>
+                </div>
+                <div class="col-checkbox-score">Select if true / Risk Score</div>
+                <div class="col-notes">Notes</div>
+            </div>
+
+            <!-- Pilot Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="col-risk-factor">Pilot</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Less than 50 Hours in Aircraft or Avionics Type</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="5">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Less than 15 hours in the last 90 days</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Flight will occur after work</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Less than 8 hours sleep prior to flight</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="5">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Dual Instruction Received in last 90 days</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="-1">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">WINGS Phase Completion in last 6 months</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="-3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Instrument Rating current and proficient</div>
+                    <div class="col-checkbox-score" data-category="pilot" data-score="-3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- Flight Conditions Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="col-risk-factor">Flight Conditions</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Twilight or Night</div>
+                    <div class="col-checkbox-score" data-category="conditions" data-score="5">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Surface wind greater than 15 Knots</div>
+                    <div class="col-checkbox-score" data-category="conditions" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Cross wind greater than 7 Knots</div>
+                    <div class="col-checkbox-score" data-category="conditions" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Mountainous Terrain</div>
+                    <div class="col-checkbox-score" data-category="conditions" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- Airport Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="col-risk-factor">Airport</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Non-towered Airport or tower closed at ETD or ETA</div>
+                    <div class="col-checkbox-score" data-category="airport" data-score="5">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Runway length less than 3,000 Feet</div>
+                    <div class="col-checkbox-score" data-category="airport" data-score="3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Wet or soft field Runway</div>
+                    <div class="col-checkbox-score" data-category="airport" data-score="3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Obstacles on Approach and/or departure</div>
+                    <div class="col-checkbox-score" data-category="airport" data-score="3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- VFR Flight Plan Section -->
+            <div class="section vfr-section">
+                <div class="section-header">
+                    <div class="col-risk-factor">VFR Flight Plan</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Ceiling less than 3,000 feet AGL</div>
+                    <div class="col-checkbox-score" data-category="vfr" data-score="2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Visibility less than 5 SM</div>
+                    <div class="col-checkbox-score" data-category="vfr" data-score="2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">No Weather Reporting at destination</div>
+                    <div class="col-checkbox-score" data-category="vfr" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Flight Plan filed and activated</div>
+                    <div class="col-checkbox-score" data-category="vfr" data-score="-2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">ATC Flight Following used</div>
+                    <div class="col-checkbox-score" data-category="vfr" data-score="-3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- IFR Flight Plan Section -->
+            <div class="section ifr-section">
+                <div class="section-header">
+                    <div class="col-risk-factor">IFR Flight Plan</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Ceiling less than 1000 feet AGL</div>
+                    <div class="col-checkbox-score" data-category="ifr" data-score="2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Visibility less than 3 SM</div>
+                    <div class="col-checkbox-score" data-category="ifr" data-score="2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">No Weather Reporting at destination</div>
+                    <div class="col-checkbox-score" data-category="ifr" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- Approaches Section -->
+            <div class="section approach-section">
+                <div class="section-header">
+                    <div class="col-risk-factor">Approaches - Instrument Pilots - Best Available Approach</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Precision Approach</div>
+                    <div class="col-checkbox-score" data-category="approach" data-score="-2">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Non-precision Approach</div>
+                    <div class="col-checkbox-score" data-category="approach" data-score="3">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">No Instrument Approach</div>
+                    <div class="col-checkbox-score" data-category="approach" data-score="4">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">Circling Approach</div>
+                    <div class="col-checkbox-score" data-category="approach" data-score="7">
+                        <span class="score-display"></span>
+                    </div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- Pilot Experience Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="col-risk-factor">Pilot Experience</div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"></div>
+                </div>
+                <div class="risk-row">
+                    <div class="col-risk-factor">
+                        <input type="text" id="pilotExperience" placeholder="Enter hours">
+                    </div>
+                    <div class="col-checkbox-score"></div>
+                    <div class="col-notes"><input type="text" class="notes-input" placeholder="Add notes..."></div>
+                </div>
+            </div>
+
+            <!-- Total Risk Score -->
+            <div class="section">
+                <div class="section-header total-risk">
+                    <div class="col-risk-factor">Total Risk Score</div>
+                    <div class="col-checkbox-score" id="totalRiskScore">0</div>
+                    <div class="col-notes"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Assessment Matrix -->
+        <div class="risk-matrix">
+            <h2>Risk Assessment Matrix</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pilot</th>
+                        <th>Experience</th>
+                        <th>Low Risk</th>
+                        <th>Moderate Risk</th>
+                        <th>High Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>IFR</td>
+                        <td>&lt;100 Hours in Type</td>
+                        <td class="low-risk">20 to 25</td>
+                        <td class="moderate-risk">25 to 30</td>
+                        <td class="high-risk">&gt;30</td>
+                    </tr>
+                    <tr>
+                        <td>IFR</td>
+                        <td>&gt;100 Hours in Type</td>
+                        <td class="low-risk">25 to 30</td>
+                        <td class="moderate-risk">30 to 35</td>
+                        <td class="high-risk">&gt;35</td>
+                    </tr>
+                    <tr>
+                        <td>VFR</td>
+                        <td>&lt;100 Hours in Type</td>
+                        <td class="low-risk">5 to 15</td>
+                        <td class="moderate-risk">15 to 20</td>
+                        <td class="high-risk">&gt;20</td>
+                    </tr>
+                    <tr>
+                        <td>VFR</td>
+                        <td>&gt;100 Hours in Type</td>
+                        <td class="low-risk">15 to 20</td>
+                        <td class="moderate-risk">20 to 25</td>
+                        <td class="high-risk">&gt;25</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="clearBtn">Clear Input Cells</button>
+            <button id="showLogBtn">Show Log</button>
+            <button id="transferBtn">Transfer to Historic Log</button>
+        </div>
+    </div>
+	    </div>
+		<div style="padding: 0 20px; text-align: center;">
+		<br></br>
+<a href=https://www.paiconsulting.com/ target="_blank" rel="noopener noreferrer"><img src="PAI Logo for FRAT square 03.png"  width="100" height="100"alt="Description" class="responsive-img"> </a>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
