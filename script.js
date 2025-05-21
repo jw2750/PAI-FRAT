@@ -22,8 +22,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load risk scores from localStorage or use the default scores in data-score attributes
     loadRiskScores();
     
+    // Check if there's a saved flight plan type in localStorage
+    const savedFlightPlanType = localStorage.getItem('selectedFlightPlanType');
+    if (savedFlightPlanType) {
+        // Update the radio button selection based on the saved value
+        document.getElementById('ifr').checked = (savedFlightPlanType === 'IFR');
+        document.getElementById('vfr').checked = (savedFlightPlanType === 'VFR');
+        console.log('Loaded flight plan type from localStorage:', savedFlightPlanType);
+    } else {
+        // No saved flight plan type, default to IFR
+        document.getElementById('ifr').checked = true;
+        console.log('No saved flight plan type found, defaulting to IFR');
+    }
+    
     // Initialize the flight plan sections visibility
     updateFlightPlanSections();
+    
+    // Show IFR currency popup if IFR is selected by default and user hasn't seen it before
+    if (document.getElementById('ifr').checked) {
+        // Check if user has already acknowledged the IFR popup
+        const hasAcknowledgedIfrPopup = localStorage.getItem('hasAcknowledgedIfrPopup') === 'true';
+        if (!hasAcknowledgedIfrPopup) {
+            showIfrCurrencyPopup();
+        }
+    }
     
     // Make sections collapsible on mobile
     if (isMobile) {
@@ -40,8 +62,83 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners to flight plan type radios
     flightplanTypeRadios.forEach(radio => {
-        radio.addEventListener('change', updateFlightPlanSections);
+        radio.addEventListener('change', function() {
+            const newValue = this.value;
+            
+            // Show IFR currency popup if changing to IFR
+            if (newValue === 'IFR' && this.checked) {
+                showIfrCurrencyPopup();
+            }
+            
+            // Save the selected flight plan type to localStorage
+            localStorage.setItem('selectedFlightPlanType', newValue);
+            console.log('Saved flight plan type to localStorage:', newValue);
+            
+            updateFlightPlanSections();
+        });
     });
+    
+    // Function to show IFR currency popup
+    function showIfrCurrencyPopup() {
+        // Create popup elements
+        const popupOverlay = document.createElement('div');
+        popupOverlay.className = 'popup-overlay';
+        popupOverlay.style.position = 'fixed';
+        popupOverlay.style.top = '0';
+        popupOverlay.style.left = '0';
+        popupOverlay.style.width = '100%';
+        popupOverlay.style.height = '100%';
+        popupOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        popupOverlay.style.display = 'flex';
+        popupOverlay.style.justifyContent = 'center';
+        popupOverlay.style.alignItems = 'center';
+        popupOverlay.style.zIndex = '1000';
+        
+        const popupContent = document.createElement('div');
+        popupContent.className = 'popup-content';
+        popupContent.style.backgroundColor = 'white';
+        popupContent.style.padding = '20px';
+        popupContent.style.borderRadius = '5px';
+        popupContent.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
+        popupContent.style.maxWidth = '500px';
+        popupContent.style.width = '90%';
+        
+        const popupTitle = document.createElement('h3');
+        popupTitle.textContent = 'IFR Currency';
+        popupTitle.style.marginTop = '0';
+        popupTitle.style.borderBottom = '1px solid #ddd';
+        popupTitle.style.paddingBottom = '10px';
+        
+        const popupMessage = document.createElement('p');
+        popupMessage.textContent = 'By selecting IFR you are stating that you are in compliance with 14 CFR 61.57(c), Instrument Experience Requirements.';
+        
+        const popupButton = document.createElement('button');
+        popupButton.textContent = 'I Understand';
+        popupButton.style.padding = '8px 16px';
+        popupButton.style.backgroundColor = '#4CAF50';
+        popupButton.style.color = 'white';
+        popupButton.style.border = 'none';
+        popupButton.style.borderRadius = '4px';
+        popupButton.style.cursor = 'pointer';
+        popupButton.style.float = 'right';
+        popupButton.style.marginTop = '10px';
+        
+        // Add click event to close the popup and mark as acknowledged
+        popupButton.addEventListener('click', function() {
+            // Set flag in localStorage to indicate user has seen the popup
+            localStorage.setItem('hasAcknowledgedIfrPopup', 'true');
+            document.body.removeChild(popupOverlay);
+        });
+        
+        // Assemble popup
+        popupContent.appendChild(popupTitle);
+        popupContent.appendChild(popupMessage);
+        popupContent.appendChild(popupButton);
+        popupOverlay.appendChild(popupContent);
+        
+        // Add popup to the document
+        document.body.appendChild(popupOverlay);
+    }
     
     // Add event listeners to risk cells
     riskCells.forEach(cell => {
@@ -253,9 +350,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('arrivalAirport').value = '';
         document.getElementById('pilotExperience').value = '';
         
-        // Reset to IFR as default
-        document.getElementById('ifr').checked = true;
-        document.getElementById('vfr').checked = false;
+        // Keep the current flight plan type selection
+        const currentFlightPlanType = document.querySelector('input[name="flightplanType"]:checked').value;
+        document.getElementById('ifr').checked = (currentFlightPlanType === 'IFR');
+        document.getElementById('vfr').checked = (currentFlightPlanType === 'VFR');
         
         // Update flight plan sections
         updateFlightPlanSections();
@@ -263,6 +361,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Recalculate total risk score
         calculateTotalRiskScore();
     }
+    
+    // No longer needed as we're using the HTML default
     
     // Function to show historic log
     function showHistoricLog() {
@@ -342,6 +442,10 @@ document.addEventListener('DOMContentLoaded', function() {
             cell.classList.remove('selected', 'low-risk', 'high-risk');
         }
     });
+    
+    // Clear the IFR popup acknowledgment flag when the page loads
+    // This ensures the popup will show each time the user selects IFR
+    localStorage.removeItem('hasAcknowledgedIfrPopup');
     
     // Function to set up collapsible sections for mobile
     function setupMobileCollapsibleSections() {
