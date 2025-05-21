@@ -19,21 +19,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if we're on a mobile device
     const isMobile = window.innerWidth <= 576;
     
+    // Ensure all risk cells have a score-display span
+    riskCells.forEach(cell => {
+        if (cell.hasAttribute('data-score')) {
+            // Create score display span if it doesn't exist
+            if (!cell.querySelector('.score-display')) {
+                const scoreDisplay = document.createElement('span');
+                scoreDisplay.className = 'score-display';
+                cell.appendChild(scoreDisplay);
+            }
+        }
+    });
+    
     // Load risk scores from localStorage or use the default scores in data-score attributes
     loadRiskScores();
     
-    // Load saved flight plan type from localStorage
-    const savedFlightplanType = localStorage.getItem('selectedFlightplanType');
-    if (savedFlightplanType) {
-        // Set the radio button based on saved value
-        if (savedFlightplanType === 'VFR') {
-            document.getElementById('vfr').checked = true;
-            document.getElementById('ifr').checked = false;
-        } else {
-            document.getElementById('ifr').checked = true;
-            document.getElementById('vfr').checked = false;
-        }
-    }
+    // Load saved form data from localStorage
+    loadFormData();
     
     // Initialize the flight plan sections visibility
     updateFlightPlanSections();
@@ -57,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save the selected flight plan type to localStorage
             localStorage.setItem('selectedFlightplanType', this.value);
             updateFlightPlanSections();
+            saveFormData(); // Save form data when flight plan type changes
         });
     });
     
@@ -67,12 +70,21 @@ document.addEventListener('DOMContentLoaded', function() {
             cell.addEventListener('click', function() {
                 toggleRiskCell(this);
                 calculateTotalRiskScore();
+                saveFormData(); // Save form data when risk cell is toggled
             });
         }
     });
     
     // Add event listener to pilot experience input
-    pilotExperienceInput.addEventListener('input', updateRiskAssessment);
+    pilotExperienceInput.addEventListener('input', function() {
+        updateRiskAssessment();
+        saveFormData(); // Save form data when pilot experience changes
+    });
+    
+    // Add event listeners to all text inputs for saving data
+    document.querySelectorAll('input[type="text"], input[type="date"], .notes-input').forEach(input => {
+        input.addEventListener('input', saveFormData);
+    });
     
     // Add event listeners to buttons
     clearBtn.addEventListener('click', clearInputCells);
@@ -249,8 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to clear all input cells
     function clearInputCells() {
-        // Clear all selected cells and their individual scores
-        document.querySelectorAll('.col-checkbox-score.selected').forEach(cell => {
+        // Clear all cells in the "Select if true / Risk Score" column
+        document.querySelectorAll('.col-checkbox-score[data-score]').forEach(cell => {
             cell.classList.remove('selected', 'low-risk', 'high-risk');
             const scoreDisplay = cell.querySelector('.score-display');
             if (scoreDisplay) {
@@ -274,8 +286,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('ifr').checked = true;
         document.getElementById('vfr').checked = false;
         
-        // Clear saved flight plan type from localStorage
+        // Clear saved form data from localStorage
         localStorage.removeItem('selectedFlightplanType');
+        localStorage.removeItem('formData');
         
         // Update flight plan sections
         updateFlightPlanSections();
@@ -347,6 +360,175 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error transferring to historic log:', error);
             alert('An error occurred while transferring to the historic log. Please try again.');
         }
+    }
+    
+    // Function to save form data to localStorage
+    function saveFormData() {
+        const formData = {
+            date: document.getElementById('date').value,
+            flightId: document.getElementById('flightId').value,
+            departureAirport: document.getElementById('departureAirport').value,
+            arrivalAirport: document.getElementById('arrivalAirport').value,
+            flightplanType: document.querySelector('input[name="flightplanType"]:checked').value,
+            pilotExperience: document.getElementById('pilotExperience').value,
+            notes: {},
+            selectedRiskFactors: []
+        };
+        
+        // Save notes
+        document.querySelectorAll('.notes-input').forEach((input, index) => {
+            if (input.value) {
+                formData.notes[index] = input.value;
+            }
+        });
+        
+        // Save selected risk factors
+        document.querySelectorAll('.col-checkbox-score.selected').forEach(cell => {
+            if (cell.hasAttribute('data-category') && cell.hasAttribute('data-score')) {
+                const category = cell.getAttribute('data-category');
+                const score = cell.getAttribute('data-score');
+                const riskRow = cell.closest('.risk-row');
+                const riskFactor = riskRow.querySelector('.col-risk-factor').textContent.trim();
+                
+                formData.selectedRiskFactors.push({
+                    category,
+                    riskFactor,
+                    score
+                });
+            }
+        });
+        
+        localStorage.setItem('formData', JSON.stringify(formData));
+    }
+    
+    // Function to load form data from localStorage
+    function loadFormData() {
+        console.log("Loading form data from localStorage");
+        const savedFormData = JSON.parse(localStorage.getItem('formData'));
+        if (!savedFormData) {
+            console.log("No saved form data found");
+            return;
+        }
+        
+        console.log("Saved form data:", savedFormData);
+        
+        // Load basic form fields
+        if (savedFormData.date) document.getElementById('date').value = savedFormData.date;
+        if (savedFormData.flightId) document.getElementById('flightId').value = savedFormData.flightId;
+        if (savedFormData.departureAirport) document.getElementById('departureAirport').value = savedFormData.departureAirport;
+        if (savedFormData.arrivalAirport) document.getElementById('arrivalAirport').value = savedFormData.arrivalAirport;
+        if (savedFormData.pilotExperience) document.getElementById('pilotExperience').value = savedFormData.pilotExperience;
+        
+        // Load flight plan type
+        if (savedFormData.flightplanType) {
+            if (savedFormData.flightplanType === 'VFR') {
+                document.getElementById('vfr').checked = true;
+                document.getElementById('ifr').checked = false;
+            } else {
+                document.getElementById('ifr').checked = true;
+                document.getElementById('vfr').checked = false;
+            }
+        }
+        
+        // Load notes
+        if (savedFormData.notes) {
+            const notesInputs = document.querySelectorAll('.notes-input');
+            for (const [index, value] of Object.entries(savedFormData.notes)) {
+                if (notesInputs[index]) {
+                    notesInputs[index].value = value;
+                }
+            }
+        }
+        
+        // Ensure all risk cells have a score-display span
+        const riskCells = document.querySelectorAll('.col-checkbox-score[data-score]');
+        console.log(`Found ${riskCells.length} risk cells with data-score attribute`);
+        
+        riskCells.forEach(cell => {
+            // Create score display span if it doesn't exist
+            if (!cell.querySelector('.score-display')) {
+                console.log("Creating score-display span for cell:", cell);
+                const scoreDisplay = document.createElement('span');
+                scoreDisplay.className = 'score-display';
+                cell.appendChild(scoreDisplay);
+            }
+        });
+        
+        // Load selected risk factors
+        if (savedFormData.selectedRiskFactors && savedFormData.selectedRiskFactors.length > 0) {
+            console.log(`Loading ${savedFormData.selectedRiskFactors.length} selected risk factors`);
+            
+            // Clear any existing selections first to avoid duplicates
+            document.querySelectorAll('.col-checkbox-score.selected').forEach(cell => {
+                cell.classList.remove('selected', 'low-risk', 'high-risk');
+                const scoreDisplay = cell.querySelector('.score-display');
+                if (scoreDisplay) {
+                    scoreDisplay.textContent = '';
+                }
+            });
+            
+            // Now apply the saved selections
+            savedFormData.selectedRiskFactors.forEach(factor => {
+                console.log("Applying factor:", factor);
+                
+                // Find the matching risk cell
+                riskCells.forEach(cell => {
+                    if (cell.hasAttribute('data-category')) {
+                        const category = cell.getAttribute('data-category');
+                        const riskRow = cell.closest('.risk-row');
+                        const riskFactor = riskRow.querySelector('.col-risk-factor').textContent.trim();
+                        
+                        if (category === factor.category && riskFactor === factor.riskFactor) {
+                            console.log(`Found matching cell for ${category} - ${riskFactor}`);
+                            
+                            // Apply selection directly
+                            const score = parseInt(cell.getAttribute('data-score'));
+                            
+                            // Make sure the score display span exists
+                            let scoreDisplay = cell.querySelector('.score-display');
+                            if (!scoreDisplay) {
+                                scoreDisplay = document.createElement('span');
+                                scoreDisplay.className = 'score-display';
+                                cell.appendChild(scoreDisplay);
+                                console.log("Created new score-display span for cell");
+                            }
+                            
+                            // Add selected class
+                            cell.classList.add('selected');
+                            
+                            // Force display style to ensure visibility
+                            cell.style.display = 'flex';
+                            
+                            // Set score text with a slight delay to ensure DOM update
+                            setTimeout(() => {
+                                // Display score
+                                scoreDisplay.textContent = score > 0 ? '+' + score : score;
+                                console.log(`Set score display text to ${scoreDisplay.textContent}`);
+                                
+                                // Add color coding
+                                if (score < 0) {
+                                    cell.classList.add('low-risk'); // Green for negative values
+                                } else if (score > 0) {
+                                    cell.classList.add('high-risk'); // Red for positive values
+                                }
+                                
+                                // Force a reflow to ensure styles are applied
+                                void cell.offsetWidth;
+                            }, 10);
+                        }
+                    }
+                });
+            });
+            
+            // Calculate total risk score after loading selections
+            calculateTotalRiskScore();
+        } else {
+            console.log("No selected risk factors found in saved data");
+        }
+        
+        // Update flight plan sections and calculate total risk score
+        updateFlightPlanSections();
+        calculateTotalRiskScore();
     }
     
     // Initialize the risk assessment and clear any displayed scores

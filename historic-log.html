@@ -220,6 +220,9 @@
         </div>
     </div>
     
+    <!-- Include the database script first -->
+    <script src="db.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const logTableContainer = document.getElementById('logTableContainer');
@@ -227,138 +230,151 @@
             const detailsModal = document.getElementById('detailsModal');
             const closeBtn = document.querySelector('.close');
             
-            // Load historic log data from localStorage
-            function loadHistoricLog() {
-                const historicLog = JSON.parse(localStorage.getItem('flightRiskHistoricLog') || '[]');
-                
-                if (historicLog.length === 0) {
-                    logTableContainer.innerHTML = '<div class="no-data">No historic log entries found.</div>';
-                    return;
-                }
-                
-                // Sort entries by date (newest first)
-                historicLog.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                // Create table
-                const table = document.createElement('table');
-                table.className = 'log-table';
-                
-                // Create table header
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                
-                const headers = ['Date', 'Flight ID', 'Departure', 'Arrival', 'Flight Plan', 'Pilot Experience', 'Risk Score', 'Actions'];
-                
-                headers.forEach(headerText => {
-                    const th = document.createElement('th');
-                    th.textContent = headerText;
-                    headerRow.appendChild(th);
-                });
-                
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-                
-                // Create table body
-                const tbody = document.createElement('tbody');
-                
-                historicLog.forEach((entry, index) => {
-                    const row = document.createElement('tr');
-                    
-                    // Format date
-                    const dateCell = document.createElement('td');
-                    dateCell.textContent = entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A';
-                    row.appendChild(dateCell);
-                    
-                    // Flight ID
-                    const flightIdCell = document.createElement('td');
-                    flightIdCell.textContent = entry.flightId || 'N/A';
-                    row.appendChild(flightIdCell);
-                    
-                    // Departure Airport
-                    const departureCell = document.createElement('td');
-                    departureCell.textContent = entry.departureAirport || 'N/A';
-                    row.appendChild(departureCell);
-                    
-                    // Arrival Airport
-                    const arrivalCell = document.createElement('td');
-                    arrivalCell.textContent = entry.arrivalAirport || 'N/A';
-                    row.appendChild(arrivalCell);
-                    
-                    // Flight Plan Type
-                    const flightPlanCell = document.createElement('td');
-                    flightPlanCell.textContent = entry.flightplanType || 'N/A';
-                    row.appendChild(flightPlanCell);
-                    
-                    // Pilot Experience
-                    const experienceCell = document.createElement('td');
-                    experienceCell.textContent = entry.pilotExperience ? `${entry.pilotExperience} hours` : 'N/A';
-                    row.appendChild(experienceCell);
-                    
-                    // Risk Score with color coding
-                    const scoreCell = document.createElement('td');
-                    const scoreSpan = document.createElement('span');
-                    scoreSpan.className = 'risk-score';
-                    scoreSpan.textContent = entry.totalScore || '0';
-                    
-                    // Add color class based on risk level
-                    const score = parseInt(entry.totalScore) || 0;
-                    const isIFR = entry.flightplanType === 'IFR';
-                    const isOver100Hours = parseInt(entry.pilotExperience) > 100;
-                    
-                    if (isIFR) {
-                        if (isOver100Hours) {
-                            if (score >= 35) scoreSpan.classList.add('high-risk-score');
-                            else if (score >= 30) scoreSpan.classList.add('moderate-risk-score');
-                            else if (score >= 25) scoreSpan.classList.add('low-risk-score');
-                        } else {
-                            if (score > 30) scoreSpan.classList.add('high-risk-score');
-                            else if (score >= 25) scoreSpan.classList.add('moderate-risk-score');
-                            else if (score >= 20) scoreSpan.classList.add('low-risk-score');
-                        }
-                    } else { // VFR
-                        if (isOver100Hours) {
-                            if (score > 25) scoreSpan.classList.add('high-risk-score');
-                            else if (score >= 20) scoreSpan.classList.add('moderate-risk-score');
-                            else if (score >= 15) scoreSpan.classList.add('low-risk-score');
-                        } else {
-                            if (score > 20) scoreSpan.classList.add('high-risk-score');
-                            else if (score >= 15) scoreSpan.classList.add('moderate-risk-score');
-                            else if (score >= 5) scoreSpan.classList.add('low-risk-score');
-                        }
+            // Load historic log data from IndexedDB
+            async function loadHistoricLog() {
+                try {
+                    // Check if database functions are available
+                    if (typeof getHistoricLogEntries !== 'function') {
+                        console.error('Database functions not available. Make sure db.js is loaded.');
+                        logTableContainer.innerHTML = '<div class="no-data">Error loading data. Please refresh the page.</div>';
+                        return;
                     }
                     
-                    scoreCell.appendChild(scoreSpan);
-                    row.appendChild(scoreCell);
+                    // Get entries from IndexedDB
+                    const historicLog = await getHistoricLogEntries();
                     
-                    // Actions
-                    const actionsCell = document.createElement('td');
-                    const detailsBtn = document.createElement('button');
-                    detailsBtn.className = 'details-button';
-                    detailsBtn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
-                    detailsBtn.dataset.index = index;
-                    detailsBtn.addEventListener('click', function() {
-                        showDetails(historicLog[this.dataset.index]);
+                    if (historicLog.length === 0) {
+                        logTableContainer.innerHTML = '<div class="no-data">No historic log entries found.</div>';
+                        return;
+                    }
+                    
+                    // Sort entries by date (newest first)
+                    historicLog.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    // Create table
+                    const table = document.createElement('table');
+                    table.className = 'log-table';
+                    
+                    // Create table header
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    
+                    const headers = ['Date', 'Flight ID', 'Departure', 'Arrival', 'Flight Plan', 'Pilot Experience', 'Risk Score', 'Actions'];
+                    
+                    headers.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        headerRow.appendChild(th);
                     });
                     
-                    // Delete button
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-button';
-                    deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
-                    deleteBtn.dataset.index = index;
-                    deleteBtn.addEventListener('click', function() {
-                        deleteEntry(this.dataset.index);
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+                    
+                    // Create table body
+                    const tbody = document.createElement('tbody');
+                    
+                    historicLog.forEach((entry, index) => {
+                        const row = document.createElement('tr');
+                        
+                        // Format date
+                        const dateCell = document.createElement('td');
+                        dateCell.textContent = entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A';
+                        row.appendChild(dateCell);
+                        
+                        // Flight ID
+                        const flightIdCell = document.createElement('td');
+                        flightIdCell.textContent = entry.flightId || 'N/A';
+                        row.appendChild(flightIdCell);
+                        
+                        // Departure Airport
+                        const departureCell = document.createElement('td');
+                        departureCell.textContent = entry.departureAirport || 'N/A';
+                        row.appendChild(departureCell);
+                        
+                        // Arrival Airport
+                        const arrivalCell = document.createElement('td');
+                        arrivalCell.textContent = entry.arrivalAirport || 'N/A';
+                        row.appendChild(arrivalCell);
+                        
+                        // Flight Plan Type
+                        const flightPlanCell = document.createElement('td');
+                        flightPlanCell.textContent = entry.flightplanType || 'N/A';
+                        row.appendChild(flightPlanCell);
+                        
+                        // Pilot Experience
+                        const experienceCell = document.createElement('td');
+                        experienceCell.textContent = entry.pilotExperience ? `${entry.pilotExperience} hours` : 'N/A';
+                        row.appendChild(experienceCell);
+                        
+                        // Risk Score with color coding
+                        const scoreCell = document.createElement('td');
+                        const scoreSpan = document.createElement('span');
+                        scoreSpan.className = 'risk-score';
+                        scoreSpan.textContent = entry.totalScore || '0';
+                        
+                        // Add color class based on risk level
+                        const score = parseInt(entry.totalScore) || 0;
+                        const isIFR = entry.flightplanType === 'IFR';
+                        const isOver100Hours = parseInt(entry.pilotExperience) > 100;
+                        
+                        if (isIFR) {
+                            if (isOver100Hours) {
+                                if (score >= 35) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 30) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 25) scoreSpan.classList.add('low-risk-score');
+                            } else {
+                                if (score > 30) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 25) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 20) scoreSpan.classList.add('low-risk-score');
+                            }
+                        } else { // VFR
+                            if (isOver100Hours) {
+                                if (score > 25) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 20) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 15) scoreSpan.classList.add('low-risk-score');
+                            } else {
+                                if (score > 20) scoreSpan.classList.add('high-risk-score');
+                                else if (score >= 15) scoreSpan.classList.add('moderate-risk-score');
+                                else if (score >= 5) scoreSpan.classList.add('low-risk-score');
+                            }
+                        }
+                        
+                        scoreCell.appendChild(scoreSpan);
+                        row.appendChild(scoreCell);
+                        
+                        // Actions
+                        const actionsCell = document.createElement('td');
+                        const detailsBtn = document.createElement('button');
+                        detailsBtn.className = 'details-button';
+                        detailsBtn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
+                        detailsBtn.dataset.index = index;
+                        detailsBtn.addEventListener('click', function() {
+                            showDetails(historicLog[this.dataset.index]);
+                        });
+                        
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-button';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                        deleteBtn.dataset.index = index;
+                        deleteBtn.addEventListener('click', function() {
+                            deleteEntry(this.dataset.index);
+                        });
+                        
+                        actionsCell.appendChild(detailsBtn);
+                        actionsCell.appendChild(deleteBtn);
+                        row.appendChild(actionsCell);
+                        
+                        tbody.appendChild(row);
                     });
                     
-                    actionsCell.appendChild(detailsBtn);
-                    actionsCell.appendChild(deleteBtn);
-                    row.appendChild(actionsCell);
-                    
-                    tbody.appendChild(row);
-                });
-                
-                table.appendChild(tbody);
-                logTableContainer.innerHTML = '';
-                logTableContainer.appendChild(table);
+                    table.appendChild(tbody);
+                    logTableContainer.innerHTML = '';
+                    logTableContainer.appendChild(table);
+                } catch (error) {
+                    console.error('Error loading historic log:', error);
+                    logTableContainer.innerHTML = '<div class="no-data">Error loading data: ' + error.message + '</div>';
+                }
             }
             
             // Show details modal for a specific entry
@@ -427,165 +443,42 @@
             }
             
             // Function to delete an entry from the historic log
-            function deleteEntry(index) {
+            async function deleteEntry(index) {
                 if (confirm('Are you sure you want to delete this entry?')) {
-                    const historicLog = JSON.parse(localStorage.getItem('flightRiskHistoricLog') || '[]');
-                    historicLog.splice(index, 1);
-                    localStorage.setItem('flightRiskHistoricLog', JSON.stringify(historicLog));
-                    loadHistoricLog(); // Reload the table
+                    try {
+                        const historicLog = await getHistoricLogEntries();
+                        if (historicLog[index]) {
+                            const entryId = historicLog[index].id;
+                            await deleteHistoricLogEntry(entryId);
+                            loadHistoricLog(); // Reload the table
+                        }
+                    } catch (error) {
+                        console.error('Error deleting entry:', error);
+                        alert('Error deleting entry. Please try again.');
+                    }
                 }
             }
             
             // Function to export the historic log to CSV
-            function exportToCSV() {
-                const historicLog = JSON.parse(localStorage.getItem('flightRiskHistoricLog') || '[]');
-                
-                if (historicLog.length === 0) {
-                    alert('No data to export.');
-                    return;
+            async function exportToCSV() {
+                try {
+                    // Use the exportHistoricLogToCSV function from db.js
+                    const csvContent = await exportHistoricLogToCSV();
+                    
+                    // Create a blob and download link
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'flight_risk_log.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (error) {
+                    console.error('Error exporting to CSV:', error);
+                    alert('Error exporting data: ' + error);
                 }
-                
-                // Escape fields that might contain commas, quotes, or newlines
-                const escapeCsv = (field) => {
-                    if (field === null || field === undefined) return '';
-                    const str = String(field);
-                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                        return `"${str.replace(/"/g, '""')}"`;
-                    }
-                    return str;
-                };
-                
-                // Define the order of risk factors based on the main page
-                const riskFactorOrder = [
-                    // Pilot Section
-                    "Less than 50 Hours in Aircraft or Avionics Type",
-                    "Less than 15 hours in the last 90 days",
-                    "Flight will occur after work",
-                    "Less than 8 hours sleep prior to flight",
-                    "Dual Instruction Received in last 90 days",
-                    "WINGS Phase Completion in last 6 months",
-                    "Instrument Rating current and proficient",
-                    
-                    // Flight Conditions Section
-                    "Twilight or Night",
-                    "Surface wind greater than 15 Knots",
-                    "Cross wind greater than 7 Knots",
-                    "Mountainous Terrain",
-                    
-                    // Airport Section
-                    "Non-towered Airport or tower closed at ETD or ETA",
-                    "Runway length less than 3,000 Feet",
-                    "Wet or soft field Runway",
-                    "Obstacles on Approach and/or departure",
-                    
-                    // VFR Flight Plan Section
-                    "Ceiling less than 3,000 feet AGL",
-                    "Visibility less than 5 SM",
-                    "No Weather Reporting at destination",
-                    "Flight Plan filed and activated",
-                    "ATC Flight Following used",
-                    
-                    // IFR Flight Plan Section
-                    "Ceiling less than 1000 feet AGL",
-                    "Visibility less than 3 SM",
-                    "No Weather Reporting at destination",
-                    
-                    // Approaches Section
-                    "Precision Approach",
-                    "Non-precision Approach",
-                    "No Instrument Approach",
-                    "Circling Approach"
-                ];
-                
-                // Determine all unique risk factors across all entries
-                const allRiskFactors = new Set();
-                historicLog.forEach(entry => {
-                    if (entry.riskFactors && entry.riskFactors.length > 0) {
-                        entry.riskFactors.forEach(factor => {
-                            // Create a unique identifier for each risk factor
-                            if (factor.riskFactor) {
-                                allRiskFactors.add(factor.riskFactor);
-                            }
-                        });
-                    }
-                });
-                
-                // CSV header - include all possible fields
-                let csvContent = 'Date,Flight ID,Departure,Arrival,Flight Plan,Pilot Experience,Risk Score,Pilot Experience Notes,Timestamp';
-                
-                // Create ordered list of risk factor headers
-                const riskFactorHeaders = [];
-                
-                // First add risk factors in the predefined order
-                riskFactorOrder.forEach(factor => {
-                    if (allRiskFactors.has(factor)) {
-                        riskFactorHeaders.push(factor);
-                        allRiskFactors.delete(factor);
-                    }
-                });
-                
-                // Then add any remaining risk factors that weren't in our predefined list
-                if (allRiskFactors.size > 0) {
-                    const remainingFactors = Array.from(allRiskFactors).sort();
-                    riskFactorHeaders.push(...remainingFactors);
-                }
-                riskFactorHeaders.forEach(riskFactor => {
-                    csvContent += `,${escapeCsv(riskFactor)} Value,${escapeCsv(riskFactor)} Notes`;
-                });
-                
-                csvContent += '\n';
-                
-                // Add each entry to CSV
-                historicLog.forEach(entry => {
-                    const date = entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A';
-                    const flightId = entry.flightId || 'N/A';
-                    const departure = entry.departureAirport || 'N/A';
-                    const arrival = entry.arrivalAirport || 'N/A';
-                    const flightPlan = entry.flightplanType || 'N/A';
-                    const experience = entry.pilotExperience ? `${entry.pilotExperience}` : 'N/A';
-                    const score = entry.totalScore || '0';
-                    const pilotNotes = entry.pilotExperienceNotes || '';
-                    const timestamp = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'N/A';
-                    
-                    // Start with the basic fields
-                    let rowContent = `${escapeCsv(date)},${escapeCsv(flightId)},${escapeCsv(departure)},${escapeCsv(arrival)},${escapeCsv(flightPlan)},${escapeCsv(experience)},${escapeCsv(score)},${escapeCsv(pilotNotes)},${escapeCsv(timestamp)}`;
-                    
-                    // Create a map of risk factors for this entry
-                    const entryRiskFactors = {};
-                    if (entry.riskFactors && entry.riskFactors.length > 0) {
-                        entry.riskFactors.forEach(factor => {
-                            if (factor.riskFactor) {
-                                entryRiskFactors[factor.riskFactor] = {
-                                    score: factor.score || '0',
-                                    notes: factor.notes || ''
-                                };
-                            }
-                        });
-                    }
-                    
-                    // Add each risk factor value and note to the row
-                    riskFactorHeaders.forEach(riskFactor => {
-                        if (entryRiskFactors[riskFactor]) {
-                            rowContent += `,${escapeCsv(entryRiskFactors[riskFactor].score)},${escapeCsv(entryRiskFactors[riskFactor].notes)}`;
-                        } else {
-                            // If this entry doesn't have this risk factor, add empty cells
-                            rowContent += `,,`;
-                        }
-                    });
-                    
-                    csvContent += rowContent + '\n';
-                });
-                
-                // Create a blob and download link
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'flight_risk_log.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
             }
             
             // Event listeners
@@ -608,10 +501,18 @@
             
             // Load the historic log data when the page loads
             loadHistoricLog();
+            
+            // Attempt to migrate data from localStorage if needed
+            if (typeof migrateFromLocalStorage === 'function') {
+                migrateFromLocalStorage()
+                    .then(result => console.log('Migration result:', result))
+                    .catch(error => console.error('Migration error:', error));
+            }
         });
     </script>
 <br></br>
-				<div style="padding: 0 20px; text-align: center;">
+<div style="padding: 0 20px; text-align: center;">
 <a href=https://www.paiconsulting.com/ target="_blank" rel="noopener noreferrer"><img src="PAI Logo for FRAT square 03.png"  width="100" height="100"alt="Description" class="responsive-img"> </a>
+</div>
 </body>
 </html>
