@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners to buttons
     backBtn.addEventListener('click', function() {
-        window.location.href = 'index.html';
+        window.location.href = 'index-original.html';
     });
     
     resetDefaultsBtn.addEventListener('click', resetToDefaults);
