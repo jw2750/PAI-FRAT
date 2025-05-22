@@ -94,6 +94,14 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'risk-scores.html';
     });
     
+    // Add event listener for Instructions button
+    const instructionsBtn = document.getElementById('instructionsBtn');
+    if (instructionsBtn) {
+        instructionsBtn.addEventListener('click', function() {
+            window.open('FRAT_Instructions_FINAL_with_icons_and_indents_no_logo.pdf', '_blank');
+        });
+    }
+    
     // Function to update flight plan sections visibility based on selected radio
     function updateFlightPlanSections() {
         const flightplanType = document.querySelector('input[name="flightplanType"]:checked').value;

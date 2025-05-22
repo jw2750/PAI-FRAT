@@ -1,0 +1,98 @@
+/* FRAT Instructions Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    line-height: 1.5;
+    background-color: white;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.logo {
+    width: 68px;
+    height: 72px;
+}
+
+h1 {
+    color: #2b5797;
+    font-size: 24px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+p {
+    margin-bottom: 15px;
+}
+
+h2 {
+    color: #2b5797;
+    font-size: 18px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
+}
+
+.note {
+    font-style: italic;
+    margin-bottom: 15px;
+    margin-left: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+td {
+    padding: 5px;
+    vertical-align: top;
+}
+
+.feature-icon {
+    margin-right: 5px;
+}
+
+.button-image {
+    display: inline-block;
+    margin: 5px 0;
+}
+
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.positive {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.negative {
+    color: #008000;
+    font-weight: bold;
+}
